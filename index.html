@@ -1,0 +1,237 @@
+VDISPOTOOL
+
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dispo Tool (Finale Version)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-gray-100 p-6 font-sans text-gray-800">
+  <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow space-y-6">
+    <h1 class="text-2xl font-bold text-center mb-4">Tagesdisposition erstellen</h1>
+
+    <!-- Projektinfos -->
+    <input id="project" class="border p-2 rounded w-full mb-2" placeholder="Projektname" />
+    <input id="date" type="date" class="border p-2 rounded w-full mb-2" placeholder="Datum" />
+    <input id="company" class="border p-2 rounded w-full mb-2" placeholder="Produktionsfirma" />
+    <textarea id="intro" class="border p-2 rounded w-full" rows="3" placeholder="Introtext für das Team"></textarea>
+
+    <!-- Wetter / Krankenhaus -->
+    <input id="wetter" class="border p-2 rounded w-full" placeholder="Wettervorhersage" />
+    <textarea id="krankenhaus" class="border p-2 rounded w-full" rows="2" placeholder="Nächstgelegenes Krankenhaus"></textarea>
+
+    <!-- Ablaufplan -->
+    <h2 class="text-lg font-semibold">Ablaufplan</h2>
+    <table class="w-full text-sm border mb-2" id="ablauf">
+      <thead><tr><th>Zeit</th><th>Aktion</th><th>Ort</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><input type="time" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><button class="remove text-red-500 text-xs">X</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="add-ablauf" class="text-indigo-600 text-sm">+ Zeile hinzufügen</button>
+
+    <!-- Shotlist -->
+    <h2 class="text-lg font-semibold">Shotlist</h2>
+    <table class="w-full text-sm border mb-2" id="shotlist">
+      <thead><tr><th>Zeit</th><th>Bildnr</th><th>Szene</th><th>Requisiten</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><button class="remove text-red-500 text-xs">X</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="add-shot" class="text-indigo-600 text-sm">+ Shot hinzufügen</button>
+
+    <!-- Rollenplan -->
+    <h2 class="text-lg font-semibold">Rollenplan</h2>
+    <table class="w-full text-sm border mb-2" id="rollenplan">
+      <thead><tr><th>Rolle</th><th>Name</th><th>Ankunft</th><th>Maske</th><th>Drehfertig</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="time" class="w-full border p-1" /></td>
+          <td><input type="time" class="w-full border p-1" /></td>
+          <td><input type="time" class="w-full border p-1" /></td>
+          <td><button class="remove text-red-500 text-xs">X</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="add-rolle" class="text-indigo-600 text-sm">+ Rolle hinzufügen</button>
+
+    <!-- Stabliste -->
+    <h2 class="text-lg font-semibold">Stabliste</h2>
+    <table class="w-full text-sm border mb-2" id="stabliste">
+      <thead><tr><th>Abteilung</th><th>Name</th><th>E-Mail</th><th>Telefon</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><input type="email" class="w-full border p-1" /></td>
+          <td><input type="text" class="w-full border p-1" /></td>
+          <td><button class="remove text-red-500 text-xs">X</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="add-stab" class="text-indigo-600 text-sm">+ Stab hinzufügen</button>
+
+    <!-- Export Button -->
+    <div class="text-right mt-6">
+      <button id="export" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Dispo als PDF exportieren</button>
+    </div>
+  </div>
+
+<script>
+  const { jsPDF } = window.jspdf;
+
+  // Zeilen hinzufügen
+  const addRow = (tableId, html) => {
+    const row = document.createElement('tr');
+    row.innerHTML = html;
+    document.querySelector(`#${tableId} tbody`).appendChild(row);
+  };
+
+  // Ablaufplan
+  document.getElementById('add-ablauf').onclick = () =>
+    addRow('ablauf', `
+      <td><input type="time" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><button class="remove text-red-500 text-xs">X</button></td>
+    `);
+
+  // Shotlist
+  document.getElementById('add-shot').onclick = () =>
+    addRow('shotlist', `
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><button class="remove text-red-500 text-xs">X</button></td>
+    `);
+
+  // Rollenplan
+  document.getElementById('add-rolle').onclick = () =>
+    addRow('rollenplan', `
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="time" class="w-full border p-1" /></td>
+      <td><input type="time" class="w-full border p-1" /></td>
+      <td><input type="time" class="w-full border p-1" /></td>
+      <td><button class="remove text-red-500 text-xs">X</button></td>
+    `);
+
+  // Stabliste
+  document.getElementById('add-stab').onclick = () =>
+    addRow('stabliste', `
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><input type="email" class="w-full border p-1" /></td>
+      <td><input type="text" class="w-full border p-1" /></td>
+      <td><button class="remove text-red-500 text-xs">X</button></td>
+    `);
+
+  // Zeile löschen
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('remove')) {
+      e.target.closest('tr').remove();
+    }
+  });
+</script>
+
+<script>
+  document.getElementById('export').onclick = () => {
+    const doc = new jsPDF();
+    let y = 20;
+
+    // Titel & Linie
+    doc.setFontSize(16);
+    doc.text("TAGESDISPOSITION", 105, y, { align: "center" });
+    y += 6;
+    doc.setLineWidth(0.3);
+    doc.line(10, y, 200, y);
+    y += 8;
+
+    const get = id => document.getElementById(id).value || '—';
+
+    // Kopfbereich
+    doc.setFontSize(11);
+    doc.text(`Projekt: ${get('project')}`, 10, y); y += 6;
+    doc.text(`Datum: ${get('date')}`, 10, y); y += 6;
+    doc.text(`Produktionsfirma: ${get('company')}`, 10, y); y += 6;
+    doc.text(`Wetter: ${get('wetter')}`, 10, y); y += 6;
+    doc.text(`Krankenhaus: ${get('krankenhaus')}`, 10, y); y += 8;
+
+    // Intro-Text
+    doc.setFontSize(10);
+    doc.text("Hinweis an das Team:", 10, y); y += 6;
+    const intro = doc.splitTextToSize(get('intro'), 180);
+    doc.text(intro, 10, y);
+    y += intro.length * 6 + 6;
+
+    const addTable = (title, id, headers, widths) => {
+      doc.addPage();
+      let y = 20;
+      doc.setFontSize(13);
+      doc.text(title, 10, y);
+      y += 8;
+      doc.setFontSize(10);
+      doc.setDrawColor(150);
+
+      // Header
+      let x = 10;
+      headers.forEach((h, i) => {
+        doc.rect(x, y, widths[i], 8);
+        doc.text(h, x + 2, y + 6);
+        x += widths[i];
+      });
+      y += 8;
+
+      // Rows
+      document.querySelectorAll(`#${id} tbody tr`).forEach(row => {
+        x = 10;
+        const values = [...row.querySelectorAll('input')].map(i => i.value || '—');
+        values.forEach((val, i) => {
+          doc.rect(x, y, widths[i], 8);
+          doc.text(val.toString(), x + 2, y + 6);
+          x += widths[i];
+        });
+        y += 8;
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+    };
+
+    // Tabellen anhängen
+    addTable("Ablaufplan", "ablauf", ["Zeit", "Aktion", "Ort"], [30, 80, 70]);
+    addTable("Shotlist", "shotlist", ["Zeit", "Bildnr", "Szene", "Requisiten"], [25, 35, 70, 50]);
+    addTable("Rollenplan", "rollenplan", ["Rolle", "Name", "Ankunft", "Maske", "Drehfertig"], [40, 40, 30, 30, 30]);
+    addTable("Stabliste", "stabliste", ["Abteilung", "Name", "E-Mail", "Telefon"], [40, 40, 60, 40]);
+
+    // Seitenzahlen
+    const pages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(9);
+      doc.text(`Seite ${i} von ${pages}`, 190, 287, { align: "right" });
+    }
+
+    doc.save("Tagesdisposition.pdf");
+  };
+</script>
+</body>
+</html>
